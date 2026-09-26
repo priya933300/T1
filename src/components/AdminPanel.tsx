@@ -16,7 +16,8 @@ import {
   Crown,
   Wallet,
   ExternalLink,
-  Copy
+  Copy,
+  Globe
 } from 'lucide-react';
 import { AppSettings, BookingOrder, CompanionProfile, UserRegistration } from '../types';
 import { 
@@ -73,6 +74,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
   const [copiedDirect, setCopiedDirect] = useState(false);
   const [copiedCustom, setCopiedCustom] = useState(false);
+  const [copiedEmbed, setCopiedEmbed] = useState(false);
+  const [copiedGoogleSiteUrl, setCopiedGoogleSiteUrl] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -736,6 +739,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <p className="text-[10px] text-amber-400/80 leading-relaxed">
                     🎯 আপনি চাইলে যেকোনো সময় নতুন WhatsApp নম্বর ও UPI দিয়ে নতুন লিঙ্ক জেনারেট করে কাস্টমারকে পাঠাতে পারেন। লিঙ্ক ওপেন করলেই সাথে সাথে সেই WhatsApp ও UPI প্রযোজ্য হবে।
                   </p>
+                </div>
+
+                {/* Option C: Google Sites (sites.google.com) Embed & Friendly Link */}
+                <div className="p-3.5 rounded-2xl bg-[#08080f] border border-blue-500/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-blue-400" />
+                      ৩. Google Sites (sites.google.com) লিঙ্ক ও এম্বেড সুবিধা:
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                          const iframeCode = `<iframe src="${origin}" style="width:100%;height:100vh;border:none;min-height:850px;" allow="geolocation *; clipboard-write *" allowfullscreen></iframe>`;
+                          navigator.clipboard.writeText(iframeCode);
+                          setCopiedEmbed(true);
+                          setTimeout(() => setCopiedEmbed(false), 2000);
+                        }}
+                        className="px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/40 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                      >
+                        {copiedEmbed ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedEmbed ? 'কপি হয়েছে!' : 'Embed কোড কপি'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-amber-100/90 leading-relaxed">
+                    🌐 <strong>Google Sites ব্যবহারের সহজ উপায়:</strong> আপনি <strong>sites.google.com</strong>-এ একটি ফ্রি পেজ তৈরি করে এই অ্যাপটি এম্বেড করে দিলে গ্রাহকদের কাছে একটি অফিসিয়াল গুগল লিঙ্ক যাবে, যা হোয়াটসঅ্যাপ বা যেকোনো সোশ্যাল মিডিয়ায় ব্লক হবে না এবং ক্রোম/সাফারি সহ সকল ব্রাউজারে নিমিষে ওপেন হবে।
+                  </p>
+
+                  <div className="bg-black/70 p-2.5 rounded-xl border border-blue-500/25 space-y-1.5 text-[11px]">
+                    <div className="text-amber-300 font-bold">সহজ ৪টি ধাপ:</div>
+                    <ol className="list-decimal list-inside space-y-1 text-amber-200/80 text-[10px]">
+                      <li><a href="https://sites.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline font-bold">sites.google.com</a> খুলে একটি নতুন Blank সাইট তৈরি করুন।</li>
+                      <li>ডানপাশের মেনু থেকে <strong>"Embed" (এম্বেড)</strong> বাটনে চাপ দিন।</li>
+                      <li><strong>"Embed code"</strong> ট্যাবে গিয়ে উপরের <span className="text-blue-300 font-mono font-bold">'Embed কোড কপি'</span> বাটনের কোডটি পেস্ট করুন।</li>
+                      <li>উপরে <strong>"Publish"</strong> বাটনে চাপ দিয়ে আপনার কাঙ্ক্ষিত নাম দিন (যেমন: royal-booking)। এরপর ওই গুগল সাইটের লিঙ্ক সকলকে শেয়ার করুন!</li>
+                    </ol>
+                  </div>
                 </div>
 
                 {/* Google Drive Integration in Settings */}

@@ -21,6 +21,7 @@ import {
 import { generate4RandomProfilesNearby } from './utils/profileGenerator';
 import { getBestLocationSilently } from './utils/geo';
 import { Crown, Sparkles, MapPin, ShieldCheck, ArrowRight, Wallet, Star } from 'lucide-react';
+import { GoldToast, ToastData } from './components/GoldToast';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserRegistration | null>(null);
@@ -33,6 +34,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [adminInitialTab, setAdminInitialTab] = useState<'profiles' | 'registrations' | 'bookings' | 'settings'>('settings');
   const [settings, setSettings] = useState<AppSettings>(getEffectiveSettings());
+  const [toast, setToast] = useState<ToastData | null>(null);
 
   // Generate 4 randomized profiles tailored to customer's GPS within 3 to 5 km
   const get4MatchedProfiles = useCallback((user: UserRegistration, allStoredProfiles: CompanionProfile[]) => {
@@ -136,6 +138,12 @@ export default function App() {
     setCurrentUser(user);
     setIsRegisterOpen(false);
     setIsSearching(true);
+    setToast({
+      id: `reg-${Date.now()}`,
+      type: 'registration',
+      title: 'রেজিস্ট্রেশন সফল (Success)',
+      message: `স্বাগতম ${user.fullName}! আপনার নিকটবর্তী এলাকার ৪ জন ভেরিফাইড সঙ্গী স্ক্যান করা হচ্ছে।`,
+    });
   };
 
   // When fake radar search completes
@@ -251,9 +259,19 @@ export default function App() {
           onPaymentConfirmed={(order) => {
             setSelectedProfileForBooking(null);
             setConfirmedOrder(order);
+            setToast({
+              id: `book-${Date.now()}`,
+              type: 'booking',
+              title: 'বুকিং সফল! ৬-সংখ্যার টিকেট তৈরি হয়েছে',
+              message: `অভিনন্দন! ${order.profileName}-এর জন্য আপনার বুকিং সফল হয়েছে।`,
+              ticketNumber: order.ticketNumber,
+            });
           }}
         />
       )}
+
+      {/* Gold Toast Notification System */}
+      <GoldToast toast={toast} onClose={() => setToast(null)} />
 
       {/* Ticket Confirmation & WhatsApp Forward Modal */}
       {confirmedOrder && (
