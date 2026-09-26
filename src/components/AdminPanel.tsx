@@ -34,6 +34,7 @@ import { GoogleDriveSync } from './GoogleDriveSync';
 
 interface AdminPanelProps {
   isOpen: boolean;
+  isStandalone?: boolean;
   onClose: () => void;
   onProfilesUpdated: () => void;
   initialTab?: 'profiles' | 'registrations' | 'bookings' | 'settings';
@@ -41,6 +42,7 @@ interface AdminPanelProps {
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   isOpen,
+  isStandalone = false,
   onClose,
   onProfilesUpdated,
   initialTab = 'profiles',
@@ -76,6 +78,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [copiedCustom, setCopiedCustom] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [copiedGoogleSiteUrl, setCopiedGoogleSiteUrl] = useState(false);
+  const [copiedAdminLink, setCopiedAdminLink] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -254,38 +257,93 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
 
+  const handleCopyAdminPortalLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const adminUrl = `${origin}/?admin=portal`;
+    navigator.clipboard.writeText(adminUrl);
+    setCopiedAdminLink(true);
+    setTimeout(() => setCopiedAdminLink(false), 2500);
+  };
+
   if (!isOpen) return null;
 
+  const containerClass = isStandalone
+    ? 'min-h-screen bg-[#050508] text-amber-50 py-4 sm:py-6 px-3 sm:px-6 flex flex-col selection:bg-amber-400 selection:text-black'
+    : 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-200';
+
+  const innerCardClass = isStandalone
+    ? 'relative w-full max-w-5xl mx-auto bg-[#090910] border-2 border-amber-500/40 rounded-3xl p-4 sm:p-7 shadow-[0_0_60px_rgba(212,175,55,0.25)] flex flex-col flex-1'
+    : 'relative w-full max-w-4xl bg-[#090910] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-[0_0_60px_rgba(212,175,55,0.2)] max-h-[92vh] flex flex-col';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl bg-[#090910] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-[0_0_60px_rgba(212,175,55,0.2)] max-h-[92vh] flex flex-col">
+    <div className={containerClass}>
+      <div className={innerCardClass}>
         {/* Header with Royal Gold Accent */}
-        <div className="flex items-center justify-between pb-4 border-b border-amber-500/20">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-amber-500/20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center text-black shadow-lg">
               <Crown className="w-5 h-5 fill-black" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black text-gold-gradient">
-                  ভিআইপি এডমিন কন্ট্রোল প্যানেল
+                <h2 className="text-lg sm:text-xl font-black text-gold-gradient">
+                  ভিআইপি এডমিন কন্ট্রোল সেন্টার
                 </h2>
                 <span className="text-[10px] bg-amber-500/15 text-amber-300 font-extrabold px-2 py-0.5 rounded-full border border-amber-400/40">
-                  MASTER 24K
+                  {isStandalone ? 'SEPARATE LINK' : 'MASTER 24K'}
                 </span>
               </div>
-              <p className="text-xs text-amber-200/70 font-medium">
-                মেয়েদের ছবি আপলোড, ৫০হাজার-১.৬৫লাখ খরচ ক্ষমতা, UPI সেটিংস ও টিকেট
+              <p className="text-[11px] sm:text-xs text-amber-200/70 font-medium">
+                মূল পেজ থেকে সম্পূর্ণ আলাদা সিকিউর কন্ট্রোল প্যানেল
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleClose}
-            className="text-amber-300/70 hover:text-amber-100 p-2 rounded-full hover:bg-amber-500/10 transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyAdminPortalLink}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 rounded-xl text-xs font-bold transition-all"
+              title="গোপনীয় এডমিন লিঙ্ক কপি করুন"
+            >
+              {copiedAdminLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+              <span>{copiedAdminLink ? 'এডমিন লিঙ্ক কপি হয়েছে!' : 'এডমিন লিঙ্ক কপি'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black rounded-xl text-xs font-black shadow-md transition-all active:scale-95"
+              title="মূল কাস্টমার সাইটে যান"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-black" />
+              <span>কাস্টমার সাইটে যান</span>
+            </button>
+
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAuthenticated(false);
+                  setPinInput('');
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-amber-400/80 hover:text-rose-400 hover:bg-rose-500/10 border border-amber-500/30 hover:border-rose-500/30 transition-all text-xs font-bold flex items-center gap-1"
+                title="লগআউট"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">লগআউট</span>
+              </button>
+            )}
+
+            {!isStandalone && (
+              <button
+                onClick={handleClose}
+                className="text-amber-300/70 hover:text-amber-100 p-2 rounded-full hover:bg-amber-500/10 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* PIN Authentication Screen */}
@@ -684,11 +742,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 </div>
 
+                {/* Dedicated Secret Admin Link Card */}
+                <div className="p-4 rounded-2xl bg-[#140f05] border-2 border-amber-400 shadow-[0_0_25px_rgba(212,175,55,0.2)] space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                      <Lock className="w-4 h-4 text-amber-400" />
+                      🔐 আপনার গোপনীয় এডমিন লিঙ্ক (Secret Admin Link):
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyAdminPortalLink}
+                      className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow"
+                    >
+                      {copiedAdminLink ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5 text-black" />}
+                      <span>{copiedAdminLink ? 'এডমিন লিঙ্ক কপি হয়েছে!' : 'এডমিন লিঙ্ক কপি করুন'}</span>
+                    </button>
+                  </div>
+                  <div className="text-xs font-mono text-amber-200 bg-black/90 p-2.5 rounded-xl truncate border border-amber-500/40 select-all">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/?admin=portal` : 'https://...?admin=portal'}
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    ⚠️ <strong>সতর্কতা:</strong> এই লিঙ্কটি ব্রাউজারে বুকমার্ক করে রাখুন। মূল পেজে কোনো এডমিন বাটন রাখা হয়নি, তাই কেবল এই লিঙ্ক দিয়ে সরাসরি এডমিন প্যানেলে প্রবেশ করা যাবে। সাধারণ কাস্টমারদের নিচের পাবলিক লিঙ্কটি দিন।
+                  </p>
+                </div>
+
                 {/* Option A: Direct Base URL */}
                 <div className="p-3.5 rounded-2xl bg-[#08080f] border border-amber-500/40 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-200">
-                      ১. সাধারণ সরাসরি লিঙ্ক (Direct Link):
+                      ১. কাস্টমারদের দেওয়ার সাধারণ মূল লিঙ্ক (Public Customer Link):
                     </span>
                     <button
                       type="button"
@@ -701,14 +783,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                     >
                       {copiedDirect ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedDirect ? 'কপি হয়েছে!' : 'লিঙ্ক কপি করুন'}</span>
+                      <span>{copiedDirect ? 'কপি হয়েছে!' : 'কাস্টমার লিঙ্ক কপি'}</span>
                     </button>
                   </div>
                   <div className="text-[11px] font-mono text-amber-300/90 bg-black/60 p-2 rounded-lg truncate border border-amber-500/20">
                     {typeof window !== 'undefined' ? window.location.origin : 'https://...'}
                   </div>
                   <p className="text-[10px] text-amber-400/80 leading-relaxed">
-                    ✅ <strong>পুরানো লিঙ্ক সবসময় কাজ করবে:</strong> আপনি যতবারই WhatsApp নম্বর বা UPI ID বদল করবেন, এই মূল লিঙ্কে ভিজিট করা সকল কাস্টমার স্বয়ংক্রিয়ভাবে আপনার সর্বশেষ সংরক্ষিত UPI ও WhatsApp দেখতে পাবে। কোনো ইমেইল বা রেজিস্ট্রেশন ছাড়া সরাসরি ৪ জন সুন্দরী ক্যান্ডিডেট দেখতে পারবে।
+                    ✅ <strong>কাস্টমারদের জন্য ১০০% ক্লিন:</strong> এই মূল লিঙ্কে কোনো এডমিন বাটন বা সেটিংস থাকে না। আপনি যতবারই WhatsApp নম্বর বা UPI ID বদল করবেন, এই মূল লিঙ্কে ভিজিট করা সকল কাস্টমার স্বয়ংক্রিয়ভাবে আপনার সর্বশেষ সংরক্ষিত তথ্য দেখতে পাবে।
                   </p>
                 </div>
 

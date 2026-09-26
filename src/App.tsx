@@ -31,7 +31,12 @@ export default function App() {
   const [matchedProfiles, setMatchedProfiles] = useState<CompanionProfile[]>([]);
   const [selectedProfileForBooking, setSelectedProfileForBooking] = useState<CompanionProfile | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<BookingOrder | null>(null);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    return searchParams.has('admin') || searchParams.has('panel') || hash === '#admin';
+  });
   const [adminInitialTab, setAdminInitialTab] = useState<'profiles' | 'registrations' | 'bookings' | 'settings'>('settings');
   const [settings, setSettings] = useState<AppSettings>(getEffectiveSettings());
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -99,13 +104,17 @@ export default function App() {
     setMatchedProfiles(matches);
     setIsRegisterOpen(false); // DO NOT pop up registration modal
 
-    // Check if user navigated with ?admin=... or ?tab=...
-    if (typeof window !== 'undefined') {
+    // Check URL parameters for admin mode and specific tab
+    const handleUrlCheck = () => {
+      if (typeof window === 'undefined') return;
       const searchParams = new URLSearchParams(window.location.search);
-      const adminParam = searchParams.get('admin');
-      const tabParam = searchParams.get('tab');
-      if (adminParam || tabParam) {
-        setIsAdminOpen(true);
+      const hash = window.location.hash;
+      const hasAdmin = searchParams.has('admin') || searchParams.has('panel') || hash === '#admin';
+      setIsAdminMode(hasAdmin);
+
+      if (hasAdmin) {
+        const adminParam = searchParams.get('admin');
+        const tabParam = searchParams.get('tab');
         if (adminParam === 'settings' || tabParam === 'settings') {
           setAdminInitialTab('settings');
         } else if (adminParam === 'bookings' || tabParam === 'bookings') {
@@ -116,7 +125,11 @@ export default function App() {
           setAdminInitialTab('profiles');
         }
       }
-    }
+    };
+
+    handleUrlCheck();
+    window.addEventListener('popstate', handleUrlCheck);
+    window.addEventListener('hashchange', handleUrlCheck);
 
     // Quietly detect GPS in the background if browser permits, without blocking UI
     getBestLocationSilently().then((geo) => {
@@ -131,7 +144,33 @@ export default function App() {
         setMatchedProfiles(get4MatchedProfiles(enrichedUser, storedProfiles));
       }
     });
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlCheck);
+      window.removeEventListener('hashchange', handleUrlCheck);
+    };
   }, [get4MatchedProfiles]);
+
+  const handleCloseAdmin = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('admin');
+      url.searchParams.delete('panel');
+      url.searchParams.delete('tab');
+      url.hash = '';
+      window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+    }
+    setIsAdminMode(false);
+  };
+
+  const handleOpenAdminSecret = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('admin', 'portal');
+      window.history.pushState({}, '', url.toString());
+    }
+    setIsAdminMode(true);
+  };
 
   // When user completes registration
   const handleRegistrationSuccess = (user: UserRegistration) => {
@@ -177,12 +216,34 @@ export default function App() {
     }
   };
 
+  // ----------------------------------------------------
+  // DEDICATED STANDALONE ADMIN PORTAL VIEW
+  // (Completely separate from the public customer portal)
+  // ----------------------------------------------------
+  if (isAdminMode) {
+    return (
+      <div className="min-h-screen bg-[#050508] text-amber-50 selection:bg-amber-400 selection:text-black">
+        <AdminPanel
+          isOpen={true}
+          isStandalone={true}
+          onClose={handleCloseAdmin}
+          onProfilesUpdated={handleProfilesUpdated}
+          initialTab={adminInitialTab}
+        />
+        <GoldToast toast={toast} onClose={() => setToast(null)} />
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // CLEAN CUSTOMER FACING PORTAL (Zero Admin Elements)
+  // ----------------------------------------------------
   return (
     <div className="min-h-screen bg-[#050508] text-amber-50 flex flex-col selection:bg-amber-400 selection:text-black">
-      {/* Header with Royal Gold Theme */}
+      {/* Header with Royal Gold Theme (Secret admin access on logo triple-tap only) */}
       <Header
         currentUser={currentUser}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={handleOpenAdminSecret}
         onResetSearch={handleTriggerSearchAgain}
         onOpenRegistration={() => setIsRegisterOpen(true)}
       />
@@ -285,20 +346,12 @@ export default function App() {
         />
       )}
 
-      {/* Admin Control Panel */}
-      <AdminPanel
-        isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
-        onProfilesUpdated={handleProfilesUpdated}
-        initialTab={adminInitialTab}
-      />
-
-      {/* Royal Dark & Gold Footer */}
+      {/* Royal Dark & Gold Customer Footer (Zero Admin Exposure) */}
       <footer className="border-t border-amber-500/20 bg-[#040407] py-6 px-4 text-center text-xs text-amber-400/60 space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-4 text-amber-300/80 font-medium">
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-            ১০০% নিরাপদ ও গোপনীয়
+            ১০০% নিরাপদ ও সম্পূর্ণ গোপনীয়
           </span>
           <span>•</span>
           <span className="flex items-center gap-1">
@@ -310,20 +363,6 @@ export default function App() {
             <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
             ফিক্সড ₹৩৬৯ (GST সহ)
           </span>
-        </div>
-
-        {/* Direct Admin Panel Button */}
-        <div className="pt-2">
-          <button
-            onClick={() => {
-              setAdminInitialTab('settings');
-              setIsAdminOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0e0e18] hover:bg-[#181828] text-amber-300 hover:text-amber-100 border border-amber-500/40 text-xs font-bold transition-all shadow-md active:scale-95"
-          >
-            <Crown className="w-3.5 h-3.5 text-amber-400" />
-            <span>⚙️ এডমিন প্যানেল ও সেটিংস খুলুন (PIN: 1234)</span>
-          </button>
         </div>
 
         <p>© {new Date().getFullYear()} Royal Companion Portal. 24K Gold VIP Edition. সর্বস্বত্ব সংরক্ষিত।</p>

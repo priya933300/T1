@@ -4,7 +4,7 @@ import { UserRegistration } from '../types';
 
 interface HeaderProps {
   currentUser: UserRegistration | null;
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
   onResetSearch: () => void;
   onOpenRegistration: () => void;
 }
@@ -15,11 +15,29 @@ export const Header: React.FC<HeaderProps> = ({
   onResetSearch,
   onOpenRegistration,
 }) => {
+  const clickTimesRef = React.useRef<number[]>([]);
+
+  const handleLogoClick = () => {
+    const now = Date.now();
+    // Keep clicks within the last 1500ms
+    const recentClicks = [...clickTimesRef.current.filter((t) => now - t < 1500), now];
+    clickTimesRef.current = recentClicks;
+
+    if (recentClicks.length >= 3) {
+      clickTimesRef.current = [];
+      if (onOpenAdmin) {
+        onOpenAdmin();
+      }
+    } else {
+      onResetSearch();
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-[#07070b]/90 backdrop-blur-xl border-b border-amber-500/30 px-4 py-3.5 shadow-2xl shadow-black/80">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Brand / Logo with Royal Gold Aesthetic */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={onResetSearch}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={handleLogoClick} title="রয়্যাল সঙ্গী">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 via-amber-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/30 border border-amber-300/40 group-hover:scale-105 transition-transform duration-300">
             <Crown className="w-6 h-6 text-black fill-black" />
           </div>
@@ -75,16 +93,6 @@ export const Header: React.FC<HeaderProps> = ({
               <RefreshCw className="w-4 h-4" />
             </button>
           )}
-
-          {/* Admin Control Panel Button */}
-          <button
-            onClick={onOpenAdmin}
-            title="এডমিন কন্ট্রোল ও সেটিংস প্যানেল"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/10 hover:from-amber-500/30 hover:to-yellow-500/20 text-amber-300 border border-amber-400/50 hover:border-amber-300 transition-all text-xs font-bold shadow-md active:scale-95"
-          >
-            <Settings className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[11px] sm:text-xs">এডমিন সেটিংস</span>
-          </button>
         </div>
       </div>
     </header>
