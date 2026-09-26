@@ -1,0 +1,10 @@
+{
+  "name": "Local Match & Quick Booking Portal",
+  "description": "GPS-based local verified companion profile discovery, UPI booking gateway, and administrative control center.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
